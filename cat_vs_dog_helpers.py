@@ -60,7 +60,7 @@ def train(network, optimizer, loss_fn, train_loader, device):
 
     accuracy = ((true_preds / num_preds) * 100).item()
 
-    return accuracy, loss
+    return accuracy, loss.item()
 
 
 def evalf(network, test_loader, device):
