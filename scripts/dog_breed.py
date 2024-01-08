@@ -113,7 +113,7 @@ def test_model(model, test_loader, criterion, device):
     return eval_info
 
 
-def train_and_test(model, model_name, train_loader, test_loader, criterion, optimizer, device, num_epochs=10):
+def train_and_test(model, model_name, train_loader, test_loader, criterion, optimizer, device, num_epochs=10, type='none'):
     train_history = []
     eval_history = []
     for epoch in range(num_epochs):
@@ -125,8 +125,8 @@ def train_and_test(model, model_name, train_loader, test_loader, criterion, opti
         train_history.append(train_info)
         eval_history.append(eval_info)
     
-    os.makedirs('breed_results', exist_ok=True)
-    torch.save([train_history, eval_history], f"breed_results/{model_name}_results.pt")
+    os.makedirs(f'breed_results/{type}', exist_ok=True)
+    torch.save([train_history, eval_history], f"breed_results/{type}/{model_name}_results.pt")
     
     return train_history, eval_history
 
@@ -185,8 +185,8 @@ def plot_training_history(train_history, eval_history):
     plt.tight_layout()
     plt.show()
 
-def load_the_results():
-    results_directory = 'breed_results/'
+def load_the_results(type='none'):
+    results_directory = f'breed_results/{type}'
     all_files = os.listdir(results_directory)
     model_files = [file for file in all_files if file.endswith('.pt')]
     model_names = [file.split('_')[0] for file in model_files]
