@@ -135,7 +135,7 @@ def plot_results(evals):
                 annot_kws={"size": 15},
                 xticklabels=["Dog", "Cat"],
                 yticklabels=["Dog", "Cat"])
-    plt.title("InceptionV3 Cat-vs-Dog Conf. Matrix")
+    plt.title("Confusion Matrix")
     plt.xlabel("Preds")
     plt.ylabel("Labels")
 
