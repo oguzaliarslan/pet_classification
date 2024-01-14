@@ -1,13 +1,46 @@
+import os
 import torch
 from tqdm.notebook import tqdm
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
-import os
+import torchvision.transforms as transforms
+from torchvision.datasets import ImageFolder
 import torchvision.models as models
 
+class DogBreedDataset(Dataset):
+    '''
+    Dataset class for the dog breed dataset.
+    '''
+    def __init__(self, ds, transform=None):
+        self.ds = ds
+        self.transform = transform
+        
+    def __len__(self):
+        return len(self.ds)
+    
+    def __getitem__(self, idx):
+        img, label = self.ds[idx]
+        if self.transform:
+            img = self.transform(img)  
+            return img, label
 
+class CatBreedDataset(Dataset):
+    
+    def __init__(self, ds, transform=None):
+        self.ds = ds
+        self.transform = transform
+        
+    def __len__(self):
+        return len(self.ds)
+    
+    def __getitem__(self, idx):
+        img, label = self.ds[idx]
+        if self.transform:
+            img = self.transform(img)  
+            return img, label
+        
 def get_pretrained_model(model_name, num_classes):
     '''
     Returns a pretrained model with the last layer replaced with a linear layer with num_classes output neurons.
@@ -49,22 +82,6 @@ def get_pretrained_model(model_name, num_classes):
         raise ValueError("Invalid model")
     
     return model
-class DogBreedDataset(Dataset):
-    '''
-    Dataset class for the dog breed dataset.
-    '''
-    def __init__(self, ds, transform=None):
-        self.ds = ds
-        self.transform = transform
-        
-    def __len__(self):
-        return len(self.ds)
-    
-    def __getitem__(self, idx):
-        img, label = self.ds[idx]
-        if self.transform:
-            img = self.transform(img)  
-            return img, label
 
 def train_one_epoch(model, train_loader, criterion, optimizer, device):
     '''
@@ -169,7 +186,6 @@ def train_and_test(model, model_name, train_loader, test_loader, criterion, opti
     
     return train_history, eval_history
 
-    
 def create_confusion_matrix(model, dataloader, device='cuda'):
     '''
     Creates a confusion matrix for the model.
@@ -298,17 +314,5 @@ def load_the_results(type='none', optimizer='adam'):
     model_losses_dict = {model_names[i]: train_losses[i] for i in range(len(model_names))}
     return model_accuracies_dict, model_test_accuracies_dict, model_losses_dict, last_true_labels, last_model_preds, model_names
 
-class CatBreedDataset(Dataset):
+
     
-    def __init__(self, ds, transform=None):
-        self.ds = ds
-        self.transform = transform
-        
-    def __len__(self):
-        return len(self.ds)
-    
-    def __getitem__(self, idx):
-        img, label = self.ds[idx]
-        if self.transform:
-            img = self.transform(img)  
-            return img, label
