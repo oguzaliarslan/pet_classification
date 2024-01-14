@@ -1,5 +1,0 @@
-resnet18_SGD: 139.90982913970947 seconds
-alexnet_SGD: 126.63324499130249 seconds
-vgg19bn_SGD: 341.73839926719666 seconds
-densenet_SGD: 215.69680452346802 seconds
-mobilenetv3_SGD: 136.3708417415619 seconds
