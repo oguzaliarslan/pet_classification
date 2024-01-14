@@ -4,7 +4,8 @@ from tqdm import tqdm
 import os
 import uuid
 import re
-from PIL import Image
+
+
 def count_images_in_folder(folder_path: str) -> int:
     image_extensions = ['png', 'jpg', 'jpeg', 'gif']
     count = sum(1 for file in os.listdir(folder_path) if file.split('.')[-1].lower() in image_extensions)
@@ -28,7 +29,6 @@ def get_breed_urls_cat() -> None:
             href_value = item.find('a')['href']
             full_url = f"https://petcim.com/{href_value}"
             file.write(full_url + '\n')
-
 
 def get_urls_cats(min, max) -> None:
     base_url = "https://www.petcim.com/"
@@ -63,9 +63,7 @@ def get_urls_cats(min, max) -> None:
 
     print("URLs extracted and saved to 'extracted_urls_cats.txt'")
 
-
-def get_images_cats(image_limit=100) -> None:
-    directory = "images"
+def get_images_cats(image_limit=100, directory = "breed_dataset/cat") -> None:
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
@@ -100,14 +98,14 @@ def get_images_cats(image_limit=100) -> None:
                 image_limit = image_limit
 
                 if images_count >= image_limit:
-                    print(f"Image limit reached for {breed_folder}. Skipping further images.")
+                    print(f"Image limit has been reached for {breed_folder}.")
                     break  # Break out of the loop once the image limit is reached
 
                 with open(img_path, 'wb') as file:
                     file.write(image.content)
 
         except Exception as e:
-            print(f'Error occurred: {e}. Skipping...')
+            print(f'Error occurred: {e}.')
             pass
 
 
@@ -166,13 +164,11 @@ def get_urls_dogs(min, max) -> None:
     print("URLs extracted and saved to 'extracted_urls_dogs.txt'")
 
 
-def get_images_dogs(image_limit=100) -> None:
-    directory = "images_kopek"
-
+def get_images_dogs(image_limit=100, directory = "breed_dataset/dog") -> None:
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
     }
-
+    
     with open('extracted_urls_dogs.txt', 'r') as file:
         urls = file.readlines()
 

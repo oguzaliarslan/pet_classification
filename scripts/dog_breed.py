@@ -9,6 +9,12 @@ import torchvision.models as models
 
 
 def get_pretrained_model(model_name, num_classes):
+    '''
+    Returns a pretrained model with the last layer replaced with a linear layer with num_classes output neurons.
+    :param model_name: name of the model to be used
+    :param num_classes: number of classes
+    :return: model
+    '''
     if model_name == 'resnet18':
         model = models.resnet18(weights=True)
         for param in model.parameters():
@@ -19,32 +25,34 @@ def get_pretrained_model(model_name, num_classes):
         model = models.alexnet(weights=True)
         for param in model.parameters():
             param.requires_grad = False
-        model.classifier[6] = torch.nn.Linear(model.classifier[6].in_features, num_classes)
+        in_features = model.classifier[6].in_features
+        model.classifier[6] = torch.nn.Linear(in_features, num_classes)
     
     elif model_name == 'vgg19bn':
         model = models.vgg19_bn(weights=True)
         for param in model.parameters():
             param.requires_grad = False
-        model.classifier[6] = torch.nn.Linear(model.classifier[6].in_features, num_classes)
+        model.classifier[6] = torch.nn.Linear(model.classifier[6].in_features, num_classes)  # type: ignore
 
     elif model_name == 'densenet':
         model = models.densenet121(weights=True)
         for param in model.parameters():
             param.requires_grad = False
-        model.classifier = torch.nn.Linear(model.classifier.in_features, num_classes)
+        model.classifier = torch.nn.Linear(model.classifier.in_features, num_classes)  # type: ignore
     
     elif model_name == 'mobilenetv3':
         model = models.mobilenet_v3_large(weights=True)
         for param in model.parameters():
             param.requires_grad = False
-        model.classifier[-1] = torch.nn.Linear(model.classifier[-1].in_features, num_classes)
-    
+        model.classifier[-1] = torch.nn.Linear(model.classifier[-1].in_features, num_classes) # type: ignore
     else:
-        raise ValueError("Invalid model name. Please choose from 'resnet18', 'resnet50', 'alexnet', 'vgg19bn', 'densenet', or 'mobilenetv3'")
+        raise ValueError("Invalid model")
     
     return model
 class DogBreedDataset(Dataset):
-    
+    '''
+    Dataset class for the dog breed dataset.
+    '''
     def __init__(self, ds, transform=None):
         self.ds = ds
         self.transform = transform
@@ -59,6 +67,15 @@ class DogBreedDataset(Dataset):
             return img, label
 
 def train_one_epoch(model, train_loader, criterion, optimizer, device):
+    '''
+    Trains the model for one epoch.
+    :param model: model
+    :param train_loader: train data loader
+    :param criterion: loss function
+    :param optimizer: optimizer
+    :param device: device
+    :return: train info
+    '''
     model.train()
     running_loss = 0.0
     running_corrects = 0
@@ -83,6 +100,14 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
     return train_info
 
 def test_model(model, test_loader, criterion, device):
+    '''
+    Evaluates the model on the test set.
+    :param model: model
+    :param test_loader: test data loader
+    :param criterion: loss function
+    :param device: device
+    :return: eval info
+    '''
     eval_info = {}
     model.eval()
     running_loss = 0.0
@@ -114,6 +139,20 @@ def test_model(model, test_loader, criterion, device):
 
 
 def train_and_test(model, model_name, train_loader, test_loader, criterion, optimizer, device, num_epochs=10, optimizer_name='none', type='none'):
+    '''
+    Pipeline for training and testing the model.
+    :param model: model
+    :param model_name: model name
+    :param train_loader: train data loader
+    :param test_loader: test data loader
+    :param criterion: loss function
+    :param optimizer: optimizer function
+    :param device: device
+    :param num_epochs: number of epochs
+    :param optimizer_name: name of the optimizer
+    :param type: type of the input data (cat or dog)
+    :return: train and eval history
+    '''
     train_history = []
     eval_history = []
     for epoch in range(num_epochs):
@@ -132,6 +171,12 @@ def train_and_test(model, model_name, train_loader, test_loader, criterion, opti
 
     
 def create_confusion_matrix(model, dataloader, device='cuda'):
+    '''
+    Creates a confusion matrix for the model.
+    :param model: model
+    :param dataloader: data loader
+    :return: confusion matrix
+    '''
     model.eval()
     all_labels = []
     all_predictions = []
@@ -149,7 +194,14 @@ def create_confusion_matrix(model, dataloader, device='cuda'):
     confusion = confusion_matrix(all_labels, all_predictions)
     return confusion
 
-def plot_confusion_matrix(confusion_matrix, class_names, model_name):
+def plot_confusion_matrix(confusion_matrix, class_names, model_name) -> None:
+    '''
+    Plots the confusion matrix.
+    :param confusion_matrix: confusion matrix
+    :param class_names: class names
+    :param model_name: model name
+    :return: None
+    '''
     plt.figure(figsize=(10, 8))
     sns.heatmap(confusion_matrix, annot=True, fmt='d', cmap='Blues', 
                 xticklabels=class_names, yticklabels=class_names)
@@ -160,7 +212,13 @@ def plot_confusion_matrix(confusion_matrix, class_names, model_name):
     plt.yticks(rotation=0)
     plt.show()
   
-def plot_training_history(train_history, eval_history):
+def plot_training_history(train_history, eval_history) -> None:
+    '''
+    Plots the training history.
+    :param train_history: training history
+    :param eval_history: evaluation history
+    :return: None
+    '''
     train_losses = [info['train_loss'].cpu().detach().numpy() for info in train_history]
     train_accuracies = [info['train_accuracy'].cpu().detach().numpy() for info in train_history]
     test_accuracies = [info['test_accuracy'].cpu().detach().numpy() for info in eval_history]
@@ -185,59 +243,13 @@ def plot_training_history(train_history, eval_history):
     plt.tight_layout()
     plt.show()
 
-def load_the_results(type='none'):
-    results_directory = f'breed_results/{type}/adam'
-    all_files = os.listdir(results_directory)
-    model_files = [file for file in all_files if file.endswith('.pt')]
-    model_names = [file.split('_')[0] for file in model_files]
-
-    all_models_train_data = []
-    for model_file in model_files:
-        train_data = torch.load(os.path.join(results_directory, model_file))
-        all_models_train_data.append(train_data)
-        
-    train_accuracies = [] 
-    test_accuracies = []
-    train_losses = []
-    last_true_labels = []
-    last_model_preds = []
-    for idx, train_data in enumerate(all_models_train_data, start=1):
-        model_train_accuracies = [] 
-        model_test_accuracies = []
-        model_train_losses = [] 
-        last_true_label = None
-        last_model_pred = None
-
-        for epoch, epoch_data in enumerate(train_data, start=1):
-            try:
-                for data in epoch_data:
-                    if 'train_accuracy' in data:
-                        train_accuracy = data['train_accuracy'].item()
-                        model_train_accuracies.append(train_accuracy)
-                        train_loss = data['train_loss']
-                        model_train_losses.append(train_loss)
-                    elif 'test_accuracy' in data: 
-                        test_accuracy = data['test_accuracy'].item()
-                        model_test_accuracies.append(test_accuracy)
-                        last_true_label = data['true_labels']
-                        last_model_pred = data['model_preds']
-            except KeyError:
-                pass
-
-        train_accuracies.append(model_train_accuracies)
-        test_accuracies.append(model_test_accuracies)
-        train_losses.append(model_train_losses)
-        last_true_labels.append(last_true_label)
-        last_model_preds.append(last_model_pred)
-
-    model_accuracies_dict = {model_names[i]: train_accuracies[i] for i in range(len(model_names))}
-    model_test_accuracies_dict = {model_names[i]: test_accuracies[i] for i in range(len(model_names))}
-    model_losses_dict = {model_names[i]: train_losses[i] for i in range(len(model_names))}
-    return model_accuracies_dict, model_test_accuracies_dict, model_losses_dict, last_true_labels, last_model_preds, model_names
-  
-  
-def load_the_results_sgd(type='none'):
-    results_directory = f'breed_results/{type}/sgd'
+def load_the_results(type='none', optimizer='adam'):
+    '''
+    Loads the results from the results directory.
+    :param type: type of the input data (cat or dog)
+    :param optimizer: optimizer used (adam or sgd)
+    '''
+    results_directory = f'breed_results/{type}/{optimizer}'
     all_files = os.listdir(results_directory)
     model_files = [file for file in all_files if file.endswith('.pt')]
     model_names = [file.split('_')[0] for file in model_files]
