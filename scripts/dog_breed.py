@@ -113,7 +113,7 @@ def test_model(model, test_loader, criterion, device):
     return eval_info
 
 
-def train_and_test(model, model_name, train_loader, test_loader, criterion, optimizer, device, num_epochs=10, type='none'):
+def train_and_test(model, model_name, train_loader, test_loader, criterion, optimizer, device, num_epochs=10, optimizer_name='none', type='none'):
     train_history = []
     eval_history = []
     for epoch in range(num_epochs):
@@ -125,8 +125,8 @@ def train_and_test(model, model_name, train_loader, test_loader, criterion, opti
         train_history.append(train_info)
         eval_history.append(eval_info)
     
-    os.makedirs(f'breed_results/{type}', exist_ok=True)
-    torch.save([train_history, eval_history], f"breed_results/{type}/{model_name}_results.pt")
+    os.makedirs(f'breed_results/{type}/{optimizer_name}/', exist_ok=True)
+    torch.save([train_history, eval_history], f"breed_results/{type}/{optimizer_name}/{model_name}_results.pt")
     
     return train_history, eval_history
 
@@ -186,7 +186,7 @@ def plot_training_history(train_history, eval_history):
     plt.show()
 
 def load_the_results(type='none'):
-    results_directory = f'breed_results/{type}'
+    results_directory = f'breed_results/{type}/adam'
     all_files = os.listdir(results_directory)
     model_files = [file for file in all_files if file.endswith('.pt')]
     model_names = [file.split('_')[0] for file in model_files]
@@ -235,6 +235,57 @@ def load_the_results(type='none'):
     model_losses_dict = {model_names[i]: train_losses[i] for i in range(len(model_names))}
     return model_accuracies_dict, model_test_accuracies_dict, model_losses_dict, last_true_labels, last_model_preds, model_names
   
+  
+def load_the_results_sgd(type='none'):
+    results_directory = f'breed_results/{type}/sgd'
+    all_files = os.listdir(results_directory)
+    model_files = [file for file in all_files if file.endswith('.pt')]
+    model_names = [file.split('_')[0] for file in model_files]
+
+    all_models_train_data = []
+    for model_file in model_files:
+        train_data = torch.load(os.path.join(results_directory, model_file))
+        all_models_train_data.append(train_data)
+        
+    train_accuracies = [] 
+    test_accuracies = []
+    train_losses = []
+    last_true_labels = []
+    last_model_preds = []
+    for idx, train_data in enumerate(all_models_train_data, start=1):
+        model_train_accuracies = [] 
+        model_test_accuracies = []
+        model_train_losses = [] 
+        last_true_label = None
+        last_model_pred = None
+
+        for epoch, epoch_data in enumerate(train_data, start=1):
+            try:
+                for data in epoch_data:
+                    if 'train_accuracy' in data:
+                        train_accuracy = data['train_accuracy'].item()
+                        model_train_accuracies.append(train_accuracy)
+                        train_loss = data['train_loss']
+                        model_train_losses.append(train_loss)
+                    elif 'test_accuracy' in data: 
+                        test_accuracy = data['test_accuracy'].item()
+                        model_test_accuracies.append(test_accuracy)
+                        last_true_label = data['true_labels']
+                        last_model_pred = data['model_preds']
+            except KeyError:
+                pass
+
+        train_accuracies.append(model_train_accuracies)
+        test_accuracies.append(model_test_accuracies)
+        train_losses.append(model_train_losses)
+        last_true_labels.append(last_true_label)
+        last_model_preds.append(last_model_pred)
+
+    model_accuracies_dict = {model_names[i]: train_accuracies[i] for i in range(len(model_names))}
+    model_test_accuracies_dict = {model_names[i]: test_accuracies[i] for i in range(len(model_names))}
+    model_losses_dict = {model_names[i]: train_losses[i] for i in range(len(model_names))}
+    return model_accuracies_dict, model_test_accuracies_dict, model_losses_dict, last_true_labels, last_model_preds, model_names
+
 class CatBreedDataset(Dataset):
     
     def __init__(self, ds, transform=None):

@@ -1,0 +1,6 @@
+vgg19bn_Adam: 330.8713402748108 seconds
+vgg19bn_SGD: 326.67928099632263 seconds
+densenet_Adam: 213.68179607391357 seconds
+densenet_SGD: 215.12756061553955 seconds
+mobilenetv3_Adam: 137.21144556999207 seconds
+mobilenetv3_SGD: 138.17017769813538 seconds
